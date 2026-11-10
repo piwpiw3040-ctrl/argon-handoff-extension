@@ -1,8 +1,10 @@
 import { MESSAGE_TYPES, CHANNELS, CHANNEL_STATUS } from '../shared/constants.js';
 import { normalizeState, updateChannelStatus } from '../shared/quota-model.js';
+import { sanitizeSlug } from '../shared/handoff-builder.js';
 
 export async function initSidePanelController(rootDoc, bridge) {
   let currentState = await bridge.getState();
+  let lastRenderedDraftId = null;
 
   const accountSelector = rootDoc.querySelector('#account-selector');
   const btnAddAccount = rootDoc.querySelector('#btn-add-account');
@@ -101,35 +103,52 @@ export async function initSidePanelController(rootDoc, bridge) {
       }
     }
 
-    // 4. Draft Content
+    // 4. Draft Content (refresh inputs whenever a new draft arrives or when empty)
     if (currentState.handoffDraft) {
-      if (titleInput && !titleInput.value) {
+      const draftId = currentState.handoffDraft.id || null;
+      const isNewDraft = draftId !== null && draftId !== lastRenderedDraftId;
+      if (isNewDraft) {
+        lastRenderedDraftId = draftId;
+      }
+
+      if (titleInput && (isNewDraft || !titleInput.value)) {
         titleInput.value = currentState.handoffDraft.titleSlug || '';
       }
-      if (markdownInput && !markdownInput.value) {
+      if (markdownInput && (isNewDraft || !markdownInput.value)) {
         markdownInput.value = currentState.handoffDraft.markdown || '';
       }
-      if (systemInput && !systemInput.value) {
+      if (systemInput && (isNewDraft || !systemInput.value)) {
         systemInput.value = currentState.handoffDraft.systemInstructions || '';
       }
     }
 
-    // 5. History List
+    // 5. History List (Safe DOM construction - prevents DOM XSS)
     if (historyList) {
-      historyList.innerHTML = '';
+      historyList.textContent = '';
       const history = currentState.handoffHistory || [];
       if (history.length === 0) {
-        historyList.innerHTML = '<div class="empty-text">ยังไม่มีประวัติ Handoff ล่าสุด</div>';
+        const emptyDiv = rootDoc.createElement('div');
+        emptyDiv.className = 'empty-text';
+        emptyDiv.textContent = 'ยังไม่มีประวัติ Handoff ล่าสุด';
+        historyList.appendChild(emptyDiv);
       } else {
         for (const item of history) {
           const div = rootDoc.createElement('div');
           div.className = 'history-item';
           const title = item.titleSlug || item.sourceChannel || 'Handoff';
           const time = new Date(item.createdAt || Date.now()).toLocaleTimeString();
-          div.innerHTML = `
-            <div class="history-item-title">${title} (${item.sourceChannel || 'web'})</div>
-            <div class="history-item-sub">${item.accountEmail || ''} • ${time}</div>
-          `;
+
+          const titleEl = rootDoc.createElement('div');
+          titleEl.className = 'history-item-title';
+          titleEl.textContent = `${title} (${item.sourceChannel || 'web'})`;
+
+          const subEl = rootDoc.createElement('div');
+          subEl.className = 'history-item-sub';
+          subEl.textContent = `${item.accountEmail || ''} • ${time}`;
+
+          div.appendChild(titleEl);
+          div.appendChild(subEl);
+
           div.onclick = () => {
             if (titleInput) titleInput.value = item.titleSlug || '';
             if (markdownInput) markdownInput.value = item.markdown || '';
@@ -143,14 +162,29 @@ export async function initSidePanelController(rootDoc, bridge) {
 
   // Event handlers
   if (accountSelector) {
-    accountSelector.onchange = () => {
-      currentState.activeEmail = accountSelector.value;
+    accountSelector.onchange = async () => {
+      const selectedEmail = accountSelector.value;
+      currentState.activeEmail = selectedEmail;
       render(currentState);
+      const gStatus = (
+        currentState.accounts &&
+        currentState.accounts[selectedEmail] &&
+        currentState.accounts[selectedEmail].channels &&
+        currentState.accounts[selectedEmail].channels[CHANNELS.GEMINI_WEB] &&
+        currentState.accounts[selectedEmail].channels[CHANNELS.GEMINI_WEB].status
+      ) || CHANNEL_STATUS.READY;
+      await bridge.sendMessage({
+        type: MESSAGE_TYPES.UPDATE_CHANNEL_STATUS,
+        email: selectedEmail,
+        setActiveEmail: true,
+        channel: CHANNELS.GEMINI_WEB,
+        status: gStatus
+      });
     };
   }
 
   if (btnAddAccount && accountEmailInput) {
-    btnAddAccount.onclick = () => {
+    btnAddAccount.onclick = async () => {
       if (accountEmailInput.style.display === 'none') {
         accountEmailInput.style.display = 'block';
         accountEmailInput.focus();
@@ -166,6 +200,13 @@ export async function initSidePanelController(rootDoc, bridge) {
           accountEmailInput.value = '';
           accountEmailInput.style.display = 'none';
           render(currentState);
+          await bridge.sendMessage({
+            type: MESSAGE_TYPES.UPDATE_CHANNEL_STATUS,
+            email: val,
+            setActiveEmail: true,
+            channel: CHANNELS.GEMINI_WEB,
+            status: CHANNEL_STATUS.READY
+          });
         } else {
           accountEmailInput.style.display = 'none';
         }
@@ -236,13 +277,14 @@ export async function initSidePanelController(rootDoc, bridge) {
     btnSendAIStudio.onclick = async () => {
       const markdown = markdownInput ? markdownInput.value : '';
       const systemPrompt = systemInput ? systemInput.value : '';
-      const title = titleInput ? titleInput.value : 'handoff';
+      const rawTitle = titleInput ? titleInput.value : 'handoff';
+      const titleSlug = sanitizeSlug(rawTitle);
 
       const draft = {
         id: 'draft-' + Date.now(),
         sourceChannel: CHANNELS.AI_STUDIO,
         accountEmail: currentState.activeEmail,
-        titleSlug: title,
+        titleSlug,
         systemInstructions: systemPrompt,
         markdown,
         createdAt: Date.now()
@@ -261,12 +303,23 @@ export async function initSidePanelController(rootDoc, bridge) {
   if (btnExportAntigravity) {
     btnExportAntigravity.onclick = async () => {
       const markdown = markdownInput ? markdownInput.value : '';
-      const title = titleInput ? titleInput.value : 'handoff';
+      const rawTitle = titleInput ? titleInput.value : 'handoff';
+      const titleSlug = sanitizeSlug(rawTitle);
+
+      const draft = {
+        id: 'draft-' + Date.now(),
+        sourceChannel: CHANNELS.ANTIGRAVITY,
+        accountEmail: currentState.activeEmail,
+        titleSlug,
+        markdown,
+        createdAt: Date.now()
+      };
 
       const res = await bridge.sendMessage({
         type: MESSAGE_TYPES.EXPORT_ANTIGRAVITY_MD,
         markdown,
-        title
+        title: titleSlug,
+        draft
       });
 
       if (res && res.continuationPrompt) {

@@ -98,20 +98,22 @@
         modelStatus: st.isFlashLiteFallback ? 'degraded_flash_lite' : 'ready'
       });
 
-      chrome.storage.local.get(null, (store) => {
-        const draft = {
-          id: 'draft-' + Date.now(),
-          sourceChannel: adapter.channelId,
-          accountEmail: email,
-          mode: 'dom_snapshot',
-          titleSlug: 'session',
-          markdown,
-          createdAt: Date.now()
-        };
-        chrome.storage.local.set({ handoffDraft: draft }, () => {
-          chrome.runtime.sendMessage({ type: MESSAGE_TYPES.OPEN_SIDE_PANEL }).catch(() => {});
-        });
-      });
+      const draft = {
+        id: 'draft-' + Date.now(),
+        sourceChannel: adapter.channelId,
+        accountEmail: email,
+        mode: 'dom_snapshot',
+        titleSlug: 'session',
+        markdown,
+        createdAt: Date.now()
+      };
+
+      try {
+        await chrome.runtime.sendMessage({ type: MESSAGE_TYPES.CAPTURE_HANDOFF, draft });
+        await chrome.runtime.sendMessage({ type: MESSAGE_TYPES.OPEN_SIDE_PANEL });
+      } catch (e) {
+        chrome.storage.local.set({ handoffDraft: draft });
+      }
     }
 
     async function handleConfirmPendingInject() {

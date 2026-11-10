@@ -71,4 +71,27 @@ describe('adapter-fixtures', () => {
     assertEqual((await geminiAdapter.injectText(emptyDoc, { prompt: 'x' })).reason, 'SELECTOR_NOT_FOUND');
     assertEqual((await aistudioAdapter.injectText(emptyDoc, { prompt: 'x' })).reason, 'SELECTOR_NOT_FOUND');
   });
+
+  it('deduplicates nested custom elements (<model-response> wrapping <message-content>) and preserves DOM order', () => {
+    const nestedHtml = `
+      <main>
+        <user-query><div class="user-query-container">First question</div></user-query>
+        <model-response><div class="model-response-container"><message-content>First answer</message-content></div></model-response>
+        <user-query><div class="user-query-container">Second question</div></user-query>
+        <model-response><div class="model-response-container"><message-content>Second answer</message-content></div></model-response>
+      </main>
+    `;
+    const doc = new DOMParser().parseFromString(nestedHtml, 'text/html');
+    const res = geminiAdapter.extractConversation(doc, 10);
+    assertEqual(res.ok, true);
+    assertEqual(res.turns.length, 4);
+    assertEqual(res.turns[0].role, 'user');
+    assertEqual(res.turns[0].content, 'First question');
+    assertEqual(res.turns[1].role, 'assistant');
+    assertEqual(res.turns[1].content, 'First answer');
+    assertEqual(res.turns[2].role, 'user');
+    assertEqual(res.turns[2].content, 'Second question');
+    assertEqual(res.turns[3].role, 'assistant');
+    assertEqual(res.turns[3].content, 'Second answer');
+  });
 });

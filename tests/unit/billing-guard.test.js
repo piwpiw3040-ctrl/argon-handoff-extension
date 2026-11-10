@@ -39,4 +39,13 @@ describe('billing-guard', () => {
     assertEqual(doc.querySelector('#t').value, 'test prompt');
     assertEqual(validateAdapterContract({}), false);
   });
+
+  it('escapes nested triple-backtick code fences using 4-backtick outer fence in extractMessageMarkdown', () => {
+    const doc = new DOMParser().parseFromString(
+      '<div><pre><code class="language-markdown">## Title\n```js\nconsole.log(1);\n```</code></pre></div>',
+      'text/html'
+    );
+    const md = extractMessageMarkdown(doc.querySelector('div'));
+    assert(md.includes('````markdown\n## Title\n```js\nconsole.log(1);\n```\n````'), 'uses 4-backtick outer fence when code contains triple backticks');
+  });
 });

@@ -8,10 +8,13 @@ function createMockEnv() {
   const openedUrls = [];
   const downloads = [];
   const alarms = [];
+  const tabMessages = [];
   return {
+    getStore: () => store,
     openedUrls,
     downloads,
     alarms,
+    tabMessages,
     env: {
       storage: {
         async get() { return store; },
@@ -20,7 +23,7 @@ function createMockEnv() {
       tabs: {
         async create({ url }) { openedUrls.push(url); return { id: 99, url }; },
         async query() { return [{ id: 1, url: 'https://gemini.google.com/app' }]; },
-        async sendMessage() { return { ok: true }; }
+        async sendMessage(tabId, msg) { tabMessages.push({ tabId, msg }); return { ok: true }; }
       },
       downloads: {
         async download(opts) { downloads.push(opts); return 1; }
@@ -90,5 +93,42 @@ describe('background-router', () => {
     const ctrl = createBackgroundController(env);
     const res = await ctrl.handleMessage({ type: MESSAGE_TYPES.OPEN_SIDE_PANEL }, { tab: { windowId: 10 } });
     assertEqual(res.ok, true);
+  });
+
+  it('persists draft in handoffHistory during PREPARE_AISTUDIO_HANDOFF and routes INJECT_HANDOFF_PROMPT / CAPTURE_HANDOFF to active tab', async () => {
+    const { env, getStore, tabMessages } = createMockEnv();
+    const ctrl = createBackgroundController(env);
+
+    await ctrl.handleMessage({
+      type: MESSAGE_TYPES.PREPARE_AISTUDIO_HANDOFF,
+      markdown: '# Context',
+      systemPrompt: 'Rules',
+      sourceEmail: 'dev@gmail.com',
+      draft: { id: 'draft-1', titleSlug: 'arch-plan', markdown: '# Context', createdAt: 1000 }
+    });
+
+    const saved = getStore();
+    assertEqual(saved.handoffHistory.length, 1);
+    assertEqual(saved.handoffHistory[0].id, 'draft-1');
+    assert(saved.pendingHandoff && saved.pendingHandoff.markdown === '# Context', 'preserves pendingHandoff alongside history');
+
+    // Forwarding INJECT_HANDOFF_PROMPT and CAPTURE_HANDOFF (without draft) to active tab
+    const injRes = await ctrl.handleMessage({ type: MESSAGE_TYPES.INJECT_HANDOFF_PROMPT });
+    assertEqual(injRes.ok, true);
+    assertEqual(tabMessages[0].tabId, 1);
+    assertEqual(tabMessages[0].msg.type, MESSAGE_TYPES.INJECT_HANDOFF_PROMPT);
+
+    const capRes = await ctrl.handleMessage({ type: MESSAGE_TYPES.CAPTURE_HANDOFF });
+    assertEqual(capRes.ok, true);
+    assertEqual(tabMessages[1].tabId, 1);
+    assertEqual(tabMessages[1].msg.type, MESSAGE_TYPES.CAPTURE_HANDOFF);
+
+    // Saving captured draft when draft payload is provided
+    await ctrl.handleMessage({
+      type: MESSAGE_TYPES.CAPTURE_HANDOFF,
+      draft: { id: 'draft-2', titleSlug: 'dom-snap', markdown: '# Snap', createdAt: 2000 }
+    });
+    assertEqual(getStore().handoffHistory.length, 2);
+    assertEqual(getStore().handoffHistory[0].id, 'draft-2');
   });
 });

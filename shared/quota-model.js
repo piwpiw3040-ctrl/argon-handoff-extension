@@ -114,9 +114,19 @@ export function updateChannelStatus(state, {
   }
 
   const chObj = acc.channels[channel] || {};
-  chObj.status = status;
-  chObj.source = source;
-  chObj.resetAt = (typeof resetAt === 'number' && Number.isFinite(resetAt) && resetAt > 0) ? resetAt : null;
+  const hasActiveCooldown =
+    chObj.status === CHANNEL_STATUS.COOLDOWN &&
+    typeof chObj.resetAt === 'number' &&
+    Number.isFinite(chObj.resetAt) &&
+    chObj.resetAt > nowMs;
+
+  const preserveCooldown = hasActiveCooldown && source === 'auto' && status === CHANNEL_STATUS.READY;
+
+  if (!preserveCooldown) {
+    chObj.status = status;
+    chObj.source = source;
+    chObj.resetAt = (typeof resetAt === 'number' && Number.isFinite(resetAt) && resetAt > 0) ? resetAt : null;
+  }
 
   if (lastSignal !== undefined) {
     chObj.lastSignal = lastSignal;

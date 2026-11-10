@@ -63,4 +63,35 @@ describe('quota-model', () => {
     assertEqual(isPendingHandoffValid(pending, 310001), false);
     assertEqual(isPendingHandoffValid({ markdown: '# Test', expiresAt: NaN }, 10000), false);
   });
+
+  it('preserves active cooldown against auto-ready status pings until expired or manually reset', () => {
+    let state = normalizeState(null, 1000);
+    state = updateChannelStatus(state, {
+      email: 'a@gmail.com',
+      channel: 'gemini_web',
+      status: 'cooldown',
+      resetAt: 60000,
+      source: 'manual'
+    }, 1000);
+
+    // Auto status ping at t=5000 should NOT clobber the active manual cooldown
+    state = updateChannelStatus(state, {
+      email: 'a@gmail.com',
+      channel: 'gemini_web',
+      status: 'ready',
+      source: 'auto'
+    }, 5000);
+    assertEqual(state.accounts['a@gmail.com'].channels.gemini_web.status, 'cooldown');
+    assertEqual(state.accounts['a@gmail.com'].channels.gemini_web.resetAt, 60000);
+
+    // Manual reset at t=6000 SHOULD clear cooldown immediately
+    state = updateChannelStatus(state, {
+      email: 'a@gmail.com',
+      channel: 'gemini_web',
+      status: 'ready',
+      source: 'manual'
+    }, 6000);
+    assertEqual(state.accounts['a@gmail.com'].channels.gemini_web.status, 'ready');
+    assertEqual(state.accounts['a@gmail.com'].channels.gemini_web.resetAt, null);
+  });
 });

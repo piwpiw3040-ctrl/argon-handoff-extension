@@ -1,5 +1,5 @@
 import { CHANNELS } from '../shared/constants.js';
-import { queryFirst, queryAll, extractMessageMarkdown, setComposerValue } from './adapter-contract.js';
+import { queryFirst, queryAll, queryTopLevelTurns, extractMessageMarkdown, setComposerValue } from './adapter-contract.js';
 
 export const aistudioAdapter = {
   channelId: CHANNELS.AI_STUDIO,
@@ -118,7 +118,7 @@ export const aistudioAdapter = {
 
   extractConversation(doc, maxTurns = 12) {
     if (!doc) return { ok: false, reason: 'SELECTOR_NOT_FOUND' };
-    const turns = queryAll(doc, [
+    const turns = queryTopLevelTurns(doc, [
       'ms-chat-turn',
       '.chat-turn',
       '[data-message-author-role]'

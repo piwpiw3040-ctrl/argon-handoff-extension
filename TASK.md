@@ -24,7 +24,8 @@ Build **Sub-project 1 (`argon-handoff-extension`)**: a zero-build Chromium Manif
 - [x] **Task 5:** Isolated Site Adapters & HTML Fixture Suite (`content/gemini-adapter.js`, `content/aistudio-adapter.js`, `tests/fixtures/*.html`, `tests/fixtures/adapter-fixtures.test.js`)
 - [x] **Task 6:** Manifest V3, Background Service Worker & Content Loader/Pill (`manifest.json`, `background.js`, `content/floating-pill.js`, `content/content-loader.js`, `tests/unit/background-router.test.js`)
 - [x] **Task 7:** Side Panel Workbench UI & Full Suite Verification (`sidepanel/sidepanel.html`, `sidepanel/sidepanel.css`, `sidepanel/sidepanel.js`, `tests/unit/sidepanel-controller.test.js`)
-- [x] **Task 8 (UI/UX Pro Max):** Apple iOS Luxury Dark Glassmorphism Redesign (`sidepanel/sidepanel.css`, `content/floating-pill.js`) — Liquid Glass, Dynamic Island capsule, OLED dark surfaces, tactile Apple spring dynamics, 27/27 tests green.
+- [x] **Task 8 (UI/UX Pro Max):** Apple iOS Luxury Dark Glassmorphism Redesign (`sidepanel/sidepanel.css`, `content/floating-pill.js`) — Liquid Glass, Dynamic Island capsule, OLED dark surfaces, tactile Apple spring dynamics.
+- [x] **Task 9 (Security & Bug Audit):** Fixed DOM XSS in Side Panel history list, fixed `appendHandoffHistory` state persistence in `background.js`, routed Side Panel `INJECT_HANDOFF_PROMPT` / `CAPTURE_HANDOFF` to active tab, deduplicated nested `<model-response>` / `<message-content>` DOM turns in chronological order, protected manual cooldowns against auto-ready status pings, added dynamic code fence escaping for nested backticks, and expanded automated test suite to **32/32 tests green**.
 
 ## 🚀 Next Step
-All tasks and tests are 100% complete and passing (27/27 tests green). Reload the extension in `edge://extensions` to experience the new Apple iOS luxury dark glassmorphism interface!
+All tasks and tests are 100% complete and passing (32/32 tests green). Reload the extension in `edge://extensions` to experience the latest security and bug fixes!

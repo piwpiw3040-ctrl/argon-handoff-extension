@@ -3,7 +3,7 @@
 > **Zero-Build Chromium Manifest V3 Extension for Multi-Channel Gemini 4 Argon Workflow, Automated Markdown Handoffs, and AI Studio Billing Guard.**
 
 [![Manifest V3](https://img.shields.io/badge/Manifest-V3-blue.svg)](https://developer.chrome.com/docs/extensions/mv3/intro/)
-[![Tests Passing](https://img.shields.io/badge/tests-27%2F27%20passed-brightgreen.svg)](tests/)
+[![Tests Passing](https://img.shields.io/badge/tests-32%2F32%20passed-brightgreen.svg)](tests/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Zero Build](https://img.shields.io/badge/build-Zero--Build%20ES%20Modules-success.svg)]()
 [![Design](https://img.shields.io/badge/Design-Apple%20iOS%20Liquid%20Glass-black.svg)]()
@@ -78,7 +78,7 @@ No build steps, compilers, or `npm` dependencies are required. This is a 100% na
 
 ## 🧪 Automated Testing
 
-The project includes an in-browser headless test harness executing 8 test suites and 27 unit & fixture assertions:
+The project includes an in-browser headless test harness executing 8 test suites and 32 unit, security & fixture assertions:
 
 ```bash
 # Run headless browser test suite (requires Python 3.10+ and Edge/Chrome)
@@ -90,12 +90,11 @@ Expected output:
 ✔ [constants] pins spec invariants and freezes configuration objects
 ✔ [handoff-builder] sanitizes slugs with Thai/Unicode, forbidden Windows chars, and reserved names
 ✔ [billing-guard] allows auto-inject only when PRO badge is present and no billing risk is detected
-✔ [adapter-fixtures] gemini-normal: detects email, Argon model, extracts reply/turns, and injects prompt
-✔ [adapter-fixtures] aistudio-pro: detects PRO badge and injects systemInstructions and prompt
-✔ [background-router] serializes concurrent CONSUME_PENDING_HANDOFF so only the first caller succeeds
-✔ [sidepanel-controller] renders multi-account matrix, billing risk banner, and draft editor
+✔ [adapter-fixtures] deduplicates nested custom elements (<model-response> wrapping <message-content>) and preserves DOM order
+✔ [background-router] persists draft in handoffHistory during PREPARE_AISTUDIO_HANDOFF and routes INJECT_HANDOFF_PROMPT / CAPTURE_HANDOFF to active tab
+✔ [sidepanel-controller] prevents DOM XSS when rendering malicious HTML payloads in handoffHistory and refreshes editor on new draft ID
 ...
-Summary: 27 passed, 0 failed
+Summary: 32 passed, 0 failed
 ```
 
 ---

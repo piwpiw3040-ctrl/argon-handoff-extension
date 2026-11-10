@@ -54,4 +54,42 @@ describe('sidepanel-controller', () => {
     await new Promise((r) => setTimeout(r, 20));
     assertEqual(sentMessages[2].type, 'CAPTURE_HANDOFF');
   });
+
+  it('prevents DOM XSS when rendering malicious HTML payloads in handoffHistory and refreshes editor on new draft ID', async () => {
+    const doc = await loadSidePanelDoc();
+    let state = normalizeState(null, 1000);
+    state = appendHandoffHistory(state, {
+      id: 'xss-1',
+      sourceChannel: '<script>window.__xss=1</script>',
+      accountEmail: '<img src=x onerror="window.__xss=2">',
+      titleSlug: '<svg onload="window.__xss=3">',
+      markdown: '## Initial Draft',
+      createdAt: 1000
+    });
+
+    const ctrl = await initSidePanelController(doc, {
+      async getState() { return state; },
+      async sendMessage() { return { ok: true }; },
+      async writeClipboard() {}
+    });
+
+    const historyEl = doc.querySelector('#handoff-history-list');
+    assertEqual(historyEl.querySelectorAll('img, svg, script').length, 0);
+    assert(historyEl.textContent.includes('<svg onload="window.__xss=3">'), 'renders HTML tags safely as literal text');
+
+    // Verify new handoffDraft with a new ID updates non-empty editor inputs
+    state = appendHandoffHistory(state, {
+      id: 'draft-new-2',
+      sourceChannel: 'gemini_web',
+      accountEmail: 'pro@gmail.com',
+      titleSlug: 'updated-slug',
+      markdown: '## Newly Captured DOM Snapshot',
+      systemInstructions: 'New System Rules',
+      createdAt: 2000
+    });
+    ctrl.render(state);
+    assertEqual(doc.querySelector('#handoff-title-input').value, 'updated-slug');
+    assertEqual(doc.querySelector('#handoff-markdown-input').value, '## Newly Captured DOM Snapshot');
+    assertEqual(doc.querySelector('#handoff-system-input').value, 'New System Rules');
+  });
 });

@@ -35,7 +35,7 @@ export function createBackgroundController(env) {
     switch (msg.type) {
       case MESSAGE_TYPES.PREPARE_AISTUDIO_HANDOFF: {
         return withLock(async () => {
-          const state = await getState();
+          let state = await getState();
           const pending = createPendingHandoff({
             target: CHANNELS.AI_STUDIO,
             markdown: msg.markdown,
@@ -43,15 +43,41 @@ export function createBackgroundController(env) {
             sourceEmail: msg.sourceEmail || state.activeEmail
           });
 
-          state.pendingHandoff = pending;
           if (msg.draft) {
-            appendHandoffHistory(state, msg.draft);
+            state = appendHandoffHistory(state, msg.draft);
           }
+          state.pendingHandoff = pending;
           await saveState(state);
 
           const tab = await env.tabs.create({ url: 'https://aistudio.google.com/prompts/new_chat' });
           return { ok: true, pending, tabId: tab ? tab.id : null };
         });
+      }
+
+      case MESSAGE_TYPES.INJECT_HANDOFF_PROMPT: {
+        const tabs = await env.tabs.query({ active: true, currentWindow: true });
+        const activeTab = tabs && tabs[0];
+        if (!activeTab || activeTab.id == null) {
+          return { ok: false, reason: 'NO_ACTIVE_TAB' };
+        }
+        return await env.tabs.sendMessage(activeTab.id, { type: MESSAGE_TYPES.INJECT_HANDOFF_PROMPT });
+      }
+
+      case MESSAGE_TYPES.CAPTURE_HANDOFF: {
+        if (msg.draft && typeof msg.draft === 'object') {
+          return withLock(async () => {
+            let state = await getState();
+            state = appendHandoffHistory(state, msg.draft);
+            await saveState(state);
+            return { ok: true, state };
+          });
+        }
+        const tabs = await env.tabs.query({ active: true, currentWindow: true });
+        const activeTab = tabs && tabs[0];
+        if (!activeTab || activeTab.id == null) {
+          return { ok: false, reason: 'NO_ACTIVE_TAB' };
+        }
+        return await env.tabs.sendMessage(activeTab.id, { type: MESSAGE_TYPES.CAPTURE_HANDOFF });
       }
 
       case MESSAGE_TYPES.CONSUME_PENDING_HANDOFF: {
@@ -71,7 +97,14 @@ export function createBackgroundController(env) {
       }
 
       case MESSAGE_TYPES.EXPORT_ANTIGRAVITY_MD: {
-        const { markdown, title } = msg;
+        const { markdown, title, draft } = msg;
+        if (draft && typeof draft === 'object') {
+          await withLock(async () => {
+            let state = await getState();
+            state = appendHandoffHistory(state, draft);
+            await saveState(state);
+          });
+        }
         const exportInfo = buildAntigravityExport({ markdown, title });
         const encodedUri = 'data:text/markdown;charset=utf-8,' + encodeURIComponent(markdown || '');
 
@@ -94,6 +127,9 @@ export function createBackgroundController(env) {
       case MESSAGE_TYPES.UPDATE_CHANNEL_STATUS: {
         return withLock(async () => {
           let state = await getState();
+          if (msg.setActiveEmail && msg.email) {
+            state.activeEmail = msg.email;
+          }
           state = updateChannelStatus(state, msg);
           await saveState(state);
 

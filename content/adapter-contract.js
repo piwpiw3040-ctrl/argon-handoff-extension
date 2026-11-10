@@ -29,11 +29,33 @@ export function queryAll(root, selectors) {
   return found;
 }
 
+export function queryTopLevelTurns(root, selectors) {
+  const all = queryAll(root, selectors);
+  if (all.length <= 1) return all;
+
+  // Filter out any element that is nested inside another matched element
+  const topLevel = all.filter(
+    (node) => !all.some((other) => other !== node && typeof other.contains === 'function' && other.contains(node))
+  );
+
+  // Sort in chronological DOM document order
+  topLevel.sort((a, b) => {
+    if (typeof a.compareDocumentPosition !== 'function') return 0;
+    const pos = a.compareDocumentPosition(b);
+    if (pos & 4) return -1; // Node.DOCUMENT_POSITION_FOLLOWING
+    if (pos & 2) return 1;  // Node.DOCUMENT_POSITION_PRECEDING
+    return 0;
+  });
+
+  return topLevel;
+}
+
 export function extractMessageMarkdown(containerEl) {
   if (!containerEl) return '';
+  const ownerDoc = containerEl.ownerDocument || document;
   const clone = containerEl.cloneNode(true);
 
-  // Transform pre/code blocks into markdown code fences
+  // Transform pre/code blocks into markdown code fences (dynamically escaped for nested backticks)
   const preElements = clone.querySelectorAll('pre');
   for (const pre of preElements) {
     const code = pre.querySelector('code') || pre;
@@ -43,14 +65,17 @@ export function extractMessageMarkdown(containerEl) {
       lang = classMatch[1];
     }
     const codeText = (code.textContent || '').replace(/\r\n/g, '\n');
-    const fence = `\n\`\`\`${lang}\n${codeText}\n\`\`\`\n`;
-    pre.replaceWith(document.createTextNode(fence));
+    const backtickMatches = codeText.match(/`+/g) || [];
+    const maxBackticks = backtickMatches.reduce((max, cur) => Math.max(max, cur.length), 0);
+    const fenceMarker = '`'.repeat(Math.max(3, maxBackticks + 1));
+    const fence = `\n${fenceMarker}${lang}\n${codeText}\n${fenceMarker}\n`;
+    pre.replaceWith(ownerDoc.createTextNode(fence));
   }
 
   // Handle block elements
   const blocks = clone.querySelectorAll('p, div, li');
   for (const b of blocks) {
-    b.appendChild(document.createTextNode('\n'));
+    b.appendChild(ownerDoc.createTextNode('\n'));
   }
 
   let text = clone.textContent || '';

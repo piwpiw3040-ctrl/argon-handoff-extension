@@ -1,5 +1,5 @@
 import { CHANNELS } from '../shared/constants.js';
-import { queryFirst, queryAll, extractMessageMarkdown, setComposerValue } from './adapter-contract.js';
+import { queryFirst, queryAll, queryTopLevelTurns, extractMessageMarkdown, setComposerValue } from './adapter-contract.js';
 
 export const geminiAdapter = {
   channelId: CHANNELS.GEMINI_WEB,
@@ -72,7 +72,7 @@ export const geminiAdapter = {
 
   extractLatestReply(doc) {
     if (!doc) return { ok: false, reason: 'SELECTOR_NOT_FOUND' };
-    const modelTurns = queryAll(doc, [
+    const modelTurns = queryTopLevelTurns(doc, [
       'model-response',
       '.model-response',
       '.model-response-container',
@@ -99,8 +99,8 @@ export const geminiAdapter = {
   extractConversation(doc, maxTurns = 12) {
     if (!doc) return { ok: false, reason: 'SELECTOR_NOT_FOUND' };
 
-    // 1. Primary: Match Google's custom elements and semantic classes
-    let turns = queryAll(doc, [
+    // 1. Primary: Match Google's custom elements and semantic classes (deduplicating nested tags & preserving DOM order)
+    let turns = queryTopLevelTurns(doc, [
       'user-query, model-response',
       'user-query',
       'model-response',
@@ -116,7 +116,7 @@ export const geminiAdapter = {
 
     // 2. Secondary fallback: Look for response containers and query blocks
     if (!turns || turns.length === 0) {
-      turns = queryAll(doc, [
+      turns = queryTopLevelTurns(doc, [
         '.response-container-content',
         '.model-response-text',
         '.query-content',
