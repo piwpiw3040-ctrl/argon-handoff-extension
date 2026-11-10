@@ -54,9 +54,35 @@
     }
 
     async function handleDomSnapshot() {
-      const turnsRes = adapter.extractConversation(document, 12);
-      if (!turnsRes.ok) {
-        alert('Could not locate conversation turns: ' + (turnsRes.reason || 'Unknown error'));
+      let turnsRes = adapter.extractConversation(document, 12);
+
+      // Fallback 1: if user highlighted/selected text on page
+      if (!turnsRes || !turnsRes.ok || !turnsRes.turns || turnsRes.turns.length === 0) {
+        const selectionText = (window.getSelection ? window.getSelection().toString() : '').trim();
+        if (selectionText && selectionText.length > 10) {
+          turnsRes = {
+            ok: true,
+            turns: [{ role: 'assistant', content: selectionText }]
+          };
+        }
+      }
+
+      // Fallback 2: read from main conversation container directly
+      if (!turnsRes || !turnsRes.ok || !turnsRes.turns || turnsRes.turns.length === 0) {
+        const mainEl = document.querySelector('main, [role="main"], infinite-scroller, .conversation-container, #chat-history');
+        if (mainEl) {
+          const rawText = (mainEl.innerText || '').trim();
+          if (rawText.length > 20) {
+            turnsRes = {
+              ok: true,
+              turns: [{ role: 'assistant', content: rawText }]
+            };
+          }
+        }
+      }
+
+      if (!turnsRes || !turnsRes.ok || !turnsRes.turns || turnsRes.turns.length === 0) {
+        alert('Could not locate conversation turns: ' + ((turnsRes && turnsRes.reason) || 'SELECTOR_NOT_FOUND') + '\n\n💡 ทริค: คุณสามารถลากคลุมดำ (Highlight) ข้อความแชทบนหน้าจอ แล้วกดปุ่ม DOM Snapshot อีกครั้งได้ทันทีครับ');
         return;
       }
 

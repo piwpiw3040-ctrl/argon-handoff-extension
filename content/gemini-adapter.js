@@ -73,9 +73,13 @@ export const geminiAdapter = {
   extractLatestReply(doc) {
     if (!doc) return { ok: false, reason: 'SELECTOR_NOT_FOUND' };
     const modelTurns = queryAll(doc, [
-      '[data-message-author-role="model"]',
+      'model-response',
       '.model-response',
-      'message-content[role="presentation"]',
+      '.model-response-container',
+      '.model-response-text',
+      '[data-message-author-role="model"]',
+      '[data-message-author="model"]',
+      'message-content',
       '.chat-turn[data-role="model"]'
     ]);
 
@@ -94,12 +98,32 @@ export const geminiAdapter = {
 
   extractConversation(doc, maxTurns = 12) {
     if (!doc) return { ok: false, reason: 'SELECTOR_NOT_FOUND' };
-    const turns = queryAll(doc, [
-      '.chat-history .chat-turn',
+
+    // 1. Primary: Match Google's custom elements and semantic classes
+    let turns = queryAll(doc, [
+      'user-query, model-response',
+      'user-query',
+      'model-response',
+      '.user-query-container',
+      '.model-response-container',
       '[data-message-author-role]',
+      '[data-message-author]',
+      'message-content',
+      '.chat-history .chat-turn',
       '.conversation-turn',
       '.chat-turn'
     ]);
+
+    // 2. Secondary fallback: Look for response containers and query blocks
+    if (!turns || turns.length === 0) {
+      turns = queryAll(doc, [
+        '.response-container-content',
+        '.model-response-text',
+        '.query-content',
+        'main article',
+        'infinite-scroller > div'
+      ]);
+    }
 
     if (!turns || turns.length === 0) {
       return { ok: false, reason: 'SELECTOR_NOT_FOUND' };
@@ -107,11 +131,28 @@ export const geminiAdapter = {
 
     const list = [];
     for (const t of turns) {
-      const roleAttr = (t.getAttribute('data-message-author-role') || t.getAttribute('data-role') || '').toLowerCase();
+      const tagName = t.tagName ? t.tagName.toLowerCase() : '';
+      const roleAttr = (
+        t.getAttribute('data-message-author-role') ||
+        t.getAttribute('data-message-author') ||
+        t.getAttribute('data-role') ||
+        ''
+      ).toLowerCase();
+
       let role = 'user';
-      if (roleAttr === 'model' || roleAttr === 'assistant' || t.classList.contains('model-response')) {
+      if (
+        tagName === 'model-response' ||
+        tagName === 'message-content' ||
+        roleAttr === 'model' ||
+        roleAttr === 'assistant' ||
+        t.classList.contains('model-response') ||
+        t.classList.contains('model-response-container') ||
+        t.classList.contains('model-response-text') ||
+        t.querySelector('model-response, .model-response-text, message-content')
+      ) {
         role = 'assistant';
       }
+
       const content = extractMessageMarkdown(t);
       if (content) {
         list.push({ role, content });
@@ -130,10 +171,15 @@ export const geminiAdapter = {
 
     const composer = queryFirst(doc, [
       'div.ql-editor[contenteditable="true"]',
+      'rich-textarea [contenteditable="true"]',
       '[contenteditable="true"][aria-label*="Gemini" i]',
-      'textarea[aria-label*="Ask Gemini" i]',
-      'textarea[aria-label*="Prompt" i]',
+      '[contenteditable="true"][aria-label*="ถาม" i]',
+      '[contenteditable="true"][role="textbox"]',
       'div.ql-editor',
+      'textarea[aria-label*="Ask Gemini" i]',
+      'textarea[aria-label*="ถาม" i]',
+      'textarea[aria-label*="Prompt" i]',
+      '[contenteditable="true"]',
       'textarea'
     ]);
 
@@ -150,7 +196,9 @@ export const geminiAdapter = {
     if (autoSend) {
       const sendBtn = queryFirst(doc, [
         'button[aria-label*="Send message" i]',
+        'button[aria-label*="ส่งข้อความ" i]',
         'button[aria-label*="Send" i]',
+        'button[aria-label*="ส่ง" i]',
         'button.send-button'
       ]);
       if (sendBtn) {
