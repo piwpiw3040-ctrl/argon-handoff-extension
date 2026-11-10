@@ -24,6 +24,7 @@ Build **Sub-project 1 (`argon-handoff-extension`)**: a zero-build Chromium Manif
 - [x] **Task 5:** Isolated Site Adapters & HTML Fixture Suite (`content/gemini-adapter.js`, `content/aistudio-adapter.js`, `tests/fixtures/*.html`, `tests/fixtures/adapter-fixtures.test.js`)
 - [x] **Task 6:** Manifest V3, Background Service Worker & Content Loader/Pill (`manifest.json`, `background.js`, `content/floating-pill.js`, `content/content-loader.js`, `tests/unit/background-router.test.js`)
 - [x] **Task 7:** Side Panel Workbench UI & Full Suite Verification (`sidepanel/sidepanel.html`, `sidepanel/sidepanel.css`, `sidepanel/sidepanel.js`, `tests/unit/sidepanel-controller.test.js`)
+- [x] **Task 8 (UI/UX Pro Max):** Apple iOS Luxury Dark Glassmorphism Redesign (`sidepanel/sidepanel.css`, `content/floating-pill.js`) — Liquid Glass, Dynamic Island capsule, OLED dark surfaces, tactile Apple spring dynamics, 27/27 tests green.
 
 ## 🚀 Next Step
-All 7 tasks and 8 test suites are 100% complete and passing (27/27 tests green). The extension is ready to load into any Chromium browser (Chrome, Edge, Brave) via **Developer Mode -> Load unpacked** pointing to `argon-handoff-extension/`. Phase 2 (Local Bridge to Antigravity RPC) can plug directly into `ChannelProvider` hook when desired.
+All tasks and tests are 100% complete and passing (27/27 tests green). Reload the extension in `edge://extensions` to experience the new Apple iOS luxury dark glassmorphism interface!
