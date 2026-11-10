@@ -26,22 +26,39 @@ export function mountFloatingPill(doc, {
       display: flex;
       align-items: center;
       gap: 6px;
-      background: #161b22;
-      border: 1px solid #30363d;
-      border-radius: 30px;
-      padding: 6px 10px;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: rgba(10, 11, 16, 0.82);
+      backdrop-filter: blur(28px) saturate(200%);
+      -webkit-backdrop-filter: blur(28px) saturate(200%);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 9999px;
+      padding: 6px 12px;
+      box-shadow: 
+        inset 0 1px 0 rgba(255, 255, 255, 0.22),
+        0 16px 40px rgba(0, 0, 0, 0.65),
+        0 2px 8px rgba(0, 0, 0, 0.4);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", sans-serif;
       font-size: 12px;
-      color: #c9d1d9;
+      color: rgba(235, 235, 245, 0.85);
       user-select: none;
+      -webkit-font-smoothing: antialiased;
+      transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .pill-container:hover {
+      border-color: rgba(255, 255, 255, 0.26);
+      box-shadow: 
+        inset 0 1px 0 rgba(255, 255, 255, 0.3),
+        0 20px 48px rgba(0, 0, 0, 0.72);
     }
     .drag-handle {
       cursor: grab;
-      color: #8b949e;
-      font-size: 14px;
+      color: rgba(255, 255, 255, 0.4);
+      font-size: 13px;
       padding: 0 4px;
       line-height: 1;
+      transition: color 0.15s;
+    }
+    .drag-handle:hover {
+      color: #ffffff;
     }
     .drag-handle:active {
       cursor: grabbing;
@@ -55,66 +72,108 @@ export function mountFloatingPill(doc, {
       display: none;
     }
     .badge {
-      font-weight: 600;
-      padding: 2px 8px;
-      border-radius: 12px;
-      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 9px;
+      border-radius: 9999px;
+      font-size: 10px;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.05em;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
     }
-    .badge.ok { background: #238636; color: #ffffff; }
-    .badge.warn { background: #d29922; color: #0d1117; }
-    .badge.danger { background: #da3633; color: #ffffff; }
+    .badge.ok { 
+      background: rgba(48, 209, 88, 0.18); 
+      color: #30d158; 
+      border-color: rgba(48, 209, 88, 0.38);
+      box-shadow: 0 0 10px rgba(48, 209, 88, 0.25);
+    }
+    .badge.warn { 
+      background: rgba(255, 159, 10, 0.18); 
+      color: #ff9f0a; 
+      border-color: rgba(255, 159, 10, 0.38);
+      box-shadow: 0 0 10px rgba(255, 159, 10, 0.25);
+    }
+    .badge.danger { 
+      background: rgba(255, 69, 58, 0.18); 
+      color: #ff453a; 
+      border-color: rgba(255, 69, 58, 0.38);
+      box-shadow: 0 0 10px rgba(255, 69, 58, 0.25);
+    }
     .btn {
-      background: #21262d;
-      border: 1px solid #30363d;
-      color: #c9d1d9;
-      padding: 4px 9px;
-      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      color: #f5f5f7;
+      padding: 4px 11px;
+      border-radius: 9999px;
       cursor: pointer;
       font-size: 12px;
-      transition: background 0.15s, border-color 0.15s;
+      font-weight: 500;
+      letter-spacing: -0.01em;
+      transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
       white-space: nowrap;
     }
     .btn:hover {
-      background: #30363d;
-      border-color: #8b949e;
+      background: rgba(255, 255, 255, 0.16);
+      border-color: rgba(255, 255, 255, 0.25);
       color: #ffffff;
+    }
+    .btn:active {
+      transform: scale(0.96);
     }
     .btn.primary {
-      background: #1f6feb;
-      border-color: #388bfd;
+      background: linear-gradient(180deg, #1d8fff 0%, #0066d6 100%);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      box-shadow: 
+        inset 0 1px 0 rgba(255, 255, 255, 0.35),
+        0 2px 10px rgba(10, 132, 255, 0.35);
       color: #ffffff;
+      font-weight: 600;
     }
     .btn.primary:hover {
-      background: #388bfd;
+      background: linear-gradient(180deg, #2f99ff 0%, #0a73e6 100%);
+      box-shadow: 
+        inset 0 1px 0 rgba(255, 255, 255, 0.45),
+        0 4px 14px rgba(10, 132, 255, 0.5);
     }
     .btn.danger-action {
-      background: #da3633;
-      border-color: #f85149;
+      background: linear-gradient(180deg, #ff453a 0%, #d70015 100%);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      box-shadow: 
+        inset 0 1px 0 rgba(255, 255, 255, 0.35),
+        0 2px 10px rgba(255, 69, 58, 0.35);
       color: #ffffff;
+      font-weight: 600;
     }
     .btn-toggle {
-      background: none;
-      border: none;
-      color: #8b949e;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: rgba(255, 255, 255, 0.5);
       cursor: pointer;
-      font-size: 12px;
-      padding: 2px 6px;
-      border-radius: 10px;
+      font-size: 11px;
+      width: 20px;
+      height: 20px;
+      border-radius: 9999px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
       line-height: 1;
+      transition: all 0.15s;
     }
     .btn-toggle:hover {
-      color: #f0f6fc;
-      background: #30363d;
+      color: #ffffff;
+      background: rgba(255, 255, 255, 0.18);
+      border-color: rgba(255, 255, 255, 0.22);
     }
     .mini-label {
       display: none;
       font-size: 11px;
       font-weight: 600;
-      color: #58a6ff;
+      color: #0a84ff;
       cursor: pointer;
-      padding: 2px 4px;
+      padding: 2px 6px;
+      letter-spacing: -0.01em;
     }
     .minimized .mini-label {
       display: inline-block;
