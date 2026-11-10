@@ -220,6 +220,18 @@ export async function initSidePanelController(rootDoc, bridge) {
     };
   }
 
+  if (btnPromptHandoff) {
+    btnPromptHandoff.onclick = async () => {
+      await bridge.sendMessage({ type: MESSAGE_TYPES.INJECT_HANDOFF_PROMPT });
+    };
+  }
+
+  if (btnDomSnapshot) {
+    btnDomSnapshot.onclick = async () => {
+      await bridge.sendMessage({ type: MESSAGE_TYPES.CAPTURE_HANDOFF });
+    };
+  }
+
   if (btnSendAIStudio) {
     btnSendAIStudio.onclick = async () => {
       const markdown = markdownInput ? markdownInput.value : '';

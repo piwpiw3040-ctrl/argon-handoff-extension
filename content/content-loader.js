@@ -113,6 +113,19 @@
       onConfirmPendingInject: handleConfirmPendingInject
     });
 
+    // Listen for commands dispatched from Side Panel or Background
+    chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+      if (!msg || !msg.type) return;
+      if (msg.type === MESSAGE_TYPES.INJECT_HANDOFF_PROMPT) {
+        handlePromptHandoff().then(() => sendResponse({ ok: true })).catch((err) => sendResponse({ ok: false, error: String(err) }));
+        return true;
+      }
+      if (msg.type === MESSAGE_TYPES.CAPTURE_HANDOFF) {
+        handleDomSnapshot().then(() => sendResponse({ ok: true })).catch((err) => sendResponse({ ok: false, error: String(err) }));
+        return true;
+      }
+    });
+
     // Check status periodically & on DOM updates
     setTimeout(reportStatus, 1000);
     setInterval(reportStatus, 15000);
@@ -140,14 +153,18 @@
                 reportStatus();
                 return;
               }
-            } else {
-              // Billing Guard held injection
+            } else if (guard.reasonCode === 'BILLING_PROMPT_DETECTED') {
+              // Explicit billing risk detected - halt automatic injection immediately
               reportStatus();
               return;
             }
 
+            // If PRO badge is not yet mounted (cold SPA mount) or composer is rendering, continue polling up to timeout
             if (Date.now() - startTime < COMPOSER_TIMEOUT_MS) {
               setTimeout(checkReady, 500);
+            } else {
+              // Timeout reached - keep payload ready for manual pill action
+              reportStatus();
             }
           };
 

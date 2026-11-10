@@ -125,6 +125,13 @@ export function createBackgroundController(env) {
         });
       }
 
+      case MESSAGE_TYPES.OPEN_SIDE_PANEL: {
+        if (typeof chrome !== 'undefined' && chrome.sidePanel && typeof chrome.sidePanel.open === 'function' && sender && sender.tab) {
+          chrome.sidePanel.open({ windowId: sender.tab.windowId }).catch(() => {});
+        }
+        return { ok: true };
+      }
+
       default:
         return { ok: false, reason: 'UNKNOWN_TYPE' };
     }

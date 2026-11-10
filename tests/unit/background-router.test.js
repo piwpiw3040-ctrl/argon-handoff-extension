@@ -84,4 +84,11 @@ describe('background-router', () => {
     assert(host.shadowRoot.textContent.includes('BILLING RISK'), 'renders badge text');
     pill.destroy();
   });
+
+  it('handles OPEN_SIDE_PANEL message from content script', async () => {
+    const { env } = createMockEnv();
+    const ctrl = createBackgroundController(env);
+    const res = await ctrl.handleMessage({ type: MESSAGE_TYPES.OPEN_SIDE_PANEL }, { tab: { windowId: 10 } });
+    assertEqual(res.ok, true);
+  });
 });

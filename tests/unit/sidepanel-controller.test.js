@@ -45,5 +45,13 @@ describe('sidepanel-controller', () => {
     await new Promise((r) => setTimeout(r, 20));
     assertEqual(sentMessages[0].type, 'EXPORT_ANTIGRAVITY_MD');
     assert(!doc.querySelector('#clipboard-fallback-box').hidden, 'reveals selectable fallback box when clipboard API throws');
+
+    doc.querySelector('#btn-prompt-handoff').click();
+    await new Promise((r) => setTimeout(r, 20));
+    assertEqual(sentMessages[1].type, 'INJECT_HANDOFF_PROMPT');
+
+    doc.querySelector('#btn-dom-snapshot').click();
+    await new Promise((r) => setTimeout(r, 20));
+    assertEqual(sentMessages[2].type, 'CAPTURE_HANDOFF');
   });
 });
