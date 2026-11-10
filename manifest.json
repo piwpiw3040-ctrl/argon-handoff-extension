@@ -1,0 +1,51 @@
+{
+  "manifest_version": 3,
+  "name": "Argon Cross-Channel Handoff & Quota Extension",
+  "version": "1.0.0",
+  "description": "Seamless Gemini 4 Argon quota monitoring, AI Studio billing guard, and cross-channel Markdown handoffs.",
+  "permissions": [
+    "sidePanel",
+    "storage",
+    "downloads",
+    "alarms",
+    "tabs"
+  ],
+  "host_permissions": [
+    "https://gemini.google.com/*",
+    "https://aistudio.google.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "action": {
+    "default_title": "Argon Handoff & Quota Hub"
+  },
+  "side_panel": {
+    "default_path": "sidepanel/sidepanel.html"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://gemini.google.com/*",
+        "https://aistudio.google.com/*"
+      ],
+      "js": [
+        "content/content-loader.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "content/*.js",
+        "shared/*.js"
+      ],
+      "matches": [
+        "https://gemini.google.com/*",
+        "https://aistudio.google.com/*"
+      ]
+    }
+  ]
+}
