@@ -29,19 +29,29 @@ export const aistudioAdapter = {
     let billingRiskDetected = false;
     let modelLabel = null;
 
-    // Check header / navigation badges exclusively (NEVER match inside user chat turns)
+    // Check header / navigation / sidebar account footer badges (NEVER match inside user chat turns)
     const navBadges = queryAll(doc, [
       'nav .tier-badge',
       'header .tier-badge',
+      'aside .tier-badge',
       '[data-test-id="tier-badge"]',
       '[data-test-id*="pro-badge"]',
       '.pro-badge',
-      'nav [aria-label*="tier" i]'
+      'nav [aria-label*="tier" i]',
+      'aside button',
+      'nav button',
+      '.account-button',
+      '.user-profile',
+      'aside footer',
+      'nav footer'
     ]);
 
     for (const b of navBadges) {
+      if (b.closest('.chat-turn, ms-chat-turn, [data-message-author-role], .conversation-container')) {
+        continue;
+      }
       const text = (b.textContent || b.getAttribute('aria-label') || '').trim();
-      if (/\bPRO\b/i.test(text)) {
+      if (/\bPRO\b/.test(text)) {
         proBadgePresent = true;
         signals.push('NavTier: PRO');
         break;
