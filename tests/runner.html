@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Argon Handoff Extension Test Runner</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace; background: #0d1117; color: #c9d1d9; padding: 20px; }
+    h1 { color: #58a6ff; font-size: 20px; }
+    .summary { font-size: 16px; margin-bottom: 20px; }
+    .passed { color: #3fb950; font-weight: bold; }
+    .failed { color: #f85149; font-weight: bold; }
+    .test-item { margin: 4px 0; font-size: 13px; }
+    .test-item.ok { color: #3fb950; }
+    .test-item.fail { color: #f85149; background: #210c0e; padding: 6px; border-radius: 4px; white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+  <h1>🧪 Argon Handoff Extension Test Suite</h1>
+  <div id="summary" class="summary">Running tests...</div>
+  <div id="results"></div>
+
+  <script type="module">
+    import { runAllSuites } from './test-harness.js';
+
+    // Test registrations
+    const params = new URLSearchParams(window.location.search);
+    const suiteFilter = params.get('suite') || '';
+
+    async function registerSuites() {
+      // Dynamic imports of registered test modules
+      const testFiles = [
+        './unit/constants.test.js'
+      ];
+
+      for (const file of testFiles) {
+        try {
+          await import(file);
+        } catch (err) {
+          console.error(`Failed to load test suite ${file}:`, err);
+          const resultsDiv = document.getElementById('results');
+          const errDiv = document.createElement('div');
+          errDiv.className = 'test-item fail';
+          errDiv.textContent = `❌ [load-error] ${file}: ${err.message}\n${err.stack || ''}`;
+          resultsDiv.appendChild(errDiv);
+        }
+      }
+    }
+
+    async function main() {
+      await registerSuites();
+      const report = await runAllSuites(suiteFilter);
+
+      const summaryDiv = document.getElementById('summary');
+      const resultsDiv = document.getElementById('results');
+
+      summaryDiv.innerHTML = `<span class="passed">Passed: ${report.passed}</span> | <span class="failed">Failed: ${report.failed}</span>`;
+
+      for (const r of report.results) {
+        const item = document.createElement('div');
+        if (r.ok) {
+          item.className = 'test-item ok';
+          item.textContent = `✔ [${r.suite}] ${r.name}`;
+        } else {
+          item.className = 'test-item fail';
+          item.textContent = `✖ [${r.suite}] ${r.name}\n${r.error || ''}`;
+        }
+        resultsDiv.appendChild(item);
+      }
+
+      // Report back to Python CLI runner if running headlessly
+      try {
+        await fetch('/__report__', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(report)
+        });
+      } catch (e) {
+        // Ignored when opened in standard interactive browser tab
+      }
+    }
+
+    main();
+  </script>
+</body>
+</html>
