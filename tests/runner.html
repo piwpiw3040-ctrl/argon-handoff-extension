@@ -29,7 +29,8 @@
     async function registerSuites() {
       // Dynamic imports of registered test modules
       const testFiles = [
-        './unit/constants.test.js'
+        './unit/constants.test.js',
+        './unit/handoff-builder.test.js'
       ];
 
       for (const file of testFiles) {
