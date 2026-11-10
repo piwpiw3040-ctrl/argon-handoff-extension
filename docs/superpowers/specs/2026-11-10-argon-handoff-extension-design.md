@@ -84,8 +84,9 @@ argon-handoff-extension/
 │   ├── sidepanel.css
 │   └── sidepanel.js
 └── tests/
-    ├── runner.html           # Browser ES-module test runner (zero dependencies)
-    ├── test-harness.js       # Lightweight assert / suite runner with DOM & console summary
+    ├── run_tests.py          # Zero-dep Python CLI runner (serves repo + runs headless Edge callback)
+    ├── runner.html           # Browser ES-module test runner (interactive & headless POST callback)
+    ├── test-harness.js       # Lightweight assert / suite runner with DOM, console & POST summary
     ├── unit/
     │   ├── handoff-builder.test.js
     │   ├── quota-model.test.js
