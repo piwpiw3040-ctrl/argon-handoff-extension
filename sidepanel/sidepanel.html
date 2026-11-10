@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Argon Handoff & Quota Hub</title>
+  <link rel="stylesheet" href="sidepanel.css">
+</head>
+<body>
+  <header class="app-header">
+    <div class="header-title">
+      <h2>🚀 Argon Handoff & Quota</h2>
+      <span class="subtext">Google AI Pro Multi-Channel Manager</span>
+    </div>
+    <div class="account-bar">
+      <label for="account-selector">Active Account:</label>
+      <div class="account-row">
+        <select id="account-selector"></select>
+        <button id="btn-add-account" class="btn-sm" title="Add or switch account">+</button>
+      </div>
+      <input type="email" id="account-email-input" placeholder="user@gmail.com" style="display: none;" />
+    </div>
+  </header>
+
+  <div id="billing-guard-banner" class="alert-banner danger" hidden>
+    <div class="alert-title">⚠️ AI Studio Billing Guard Alert</div>
+    <div id="billing-guard-message" class="alert-msg">ไม่พบป้าย PRO หรือตรวจพบสัญญาณเสี่ยง Cloud Billing</div>
+  </div>
+
+  <section class="card channels-section">
+    <h3>📡 Quota Channels (Gemini 4 Argon)</h3>
+    <div class="channels-grid">
+      <!-- Channel 1: Gemini Web -->
+      <div class="channel-card" id="card-gemini-web">
+        <div class="channel-head">
+          <span class="channel-name">1️⃣ Gemini Web</span>
+          <span class="badge" id="badge-gemini-web">Ready</span>
+        </div>
+        <div class="channel-body">
+          <div class="cooldown-text" id="cooldown-gemini-web">โควต้าพร้อมใช้งาน</div>
+          <div class="channel-actions">
+            <button class="btn-xs btn-cooldown" data-channel="gemini_web" data-action="cooldown">Mark 60m</button>
+            <button class="btn-xs btn-reset" data-channel="gemini_web" data-action="reset">Reset</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Channel 2: AI Studio -->
+      <div class="channel-card" id="card-ai-studio">
+        <div class="channel-head">
+          <span class="channel-name">2️⃣ AI Studio</span>
+          <span class="badge" id="badge-ai-studio">Ready</span>
+        </div>
+        <div class="channel-body">
+          <div class="cooldown-text" id="cooldown-ai-studio">Playground Pro Mode</div>
+          <div class="channel-actions">
+            <button class="btn-xs btn-cooldown" data-channel="ai_studio" data-action="cooldown">Mark 60m</button>
+            <button class="btn-xs btn-reset" data-channel="ai_studio" data-action="reset">Reset</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Channel 3: Antigravity -->
+      <div class="channel-card" id="card-antigravity">
+        <div class="channel-head">
+          <span class="channel-name">3️⃣ Antigravity</span>
+          <span class="badge ok" id="badge-antigravity">Export Ready</span>
+        </div>
+        <div class="channel-body">
+          <div class="cooldown-text" id="cooldown-antigravity">Phase-2 Bridge Hook</div>
+          <div class="channel-actions">
+            <button class="btn-xs btn-reset" data-channel="antigravity" data-action="reset">Sync</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card workbench-section">
+    <h3>📝 Handoff Workbench</h3>
+    <div class="workbench-toolbar">
+      <button id="btn-prompt-handoff" class="btn">ยิง Prompt สรุปงาน</button>
+      <button id="btn-dom-snapshot" class="btn">ดึง DOM Snapshot (.md)</button>
+    </div>
+
+    <div class="input-group">
+      <label for="handoff-title-input">Title / Slug:</label>
+      <input type="text" id="handoff-title-input" placeholder="e.g. auth-refactor-step-1" />
+    </div>
+
+    <div class="input-group">
+      <label for="handoff-system-input">System Instructions (สำหรับส่งเข้า AI Studio):</label>
+      <textarea id="handoff-system-input" rows="2" placeholder="System rules, persona, or architecture constraints..."></textarea>
+    </div>
+
+    <div class="input-group">
+      <label for="handoff-markdown-input">Markdown Handoff Content:</label>
+      <textarea id="handoff-markdown-input" rows="7" placeholder="## Objective&#10;..."></textarea>
+    </div>
+
+    <!-- AI Studio Pre-flight Checklist -->
+    <div class="checklist-panel">
+      <div class="checklist-title">AI Studio Pre-Flight Checklist:</div>
+      <label class="checklist-item">
+        <input type="checkbox" id="chk-pro-badge" checked>
+        <span>เช็กป้าย [PRO] มุมซ้ายล่างเรียบร้อย</span>
+      </label>
+      <label class="checklist-item">
+        <input type="checkbox" id="chk-thinking-high" checked>
+        <span>ตั้ง Thinking = High</span>
+      </label>
+      <label class="checklist-item">
+        <input type="checkbox" id="chk-search-grounding" checked>
+        <span>เปิด Google Search Grounding</span>
+      </label>
+    </div>
+
+    <div class="workbench-actions">
+      <button id="btn-send-aistudio" class="btn primary">ส่งต่อไป AI Studio (ก๊อก 2)</button>
+      <button id="btn-export-antigravity" class="btn secondary">ดาวน์โหลด .md + Copy คำสั่ง Antigravity (ก๊อก 3)</button>
+    </div>
+
+    <!-- Clipboard Fallback Box -->
+    <div id="clipboard-fallback-box" class="alert-banner warn" hidden>
+      <div class="alert-title">📋 Clipboard Text (Select & Copy):</div>
+      <textarea id="clipboard-fallback-textarea" rows="3" readonly></textarea>
+    </div>
+  </section>
+
+  <section class="card history-section">
+    <h3>🕒 Handoff History (Last 15)</h3>
+    <div id="handoff-history-list" class="history-list">
+      <div class="empty-text">ยังไม่มีประวัติ Handoff ล่าสุด</div>
+    </div>
+  </section>
+
+  <script type="module" src="sidepanel.js"></script>
+</body>
+</html>
