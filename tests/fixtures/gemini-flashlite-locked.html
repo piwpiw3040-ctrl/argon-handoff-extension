@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body>
+  <header>
+    <a aria-label="Google Account: User (dev@gmail.com)" href="#">Account</a>
+    <div class="model-picker">
+      <button aria-label="Current Model">Flash-Lite</button>
+    </div>
+  </header>
+  <div role="alert" class="rate-limit-banner">
+    You've reached your Gemini 4 Argon limit for this hour. Switched to Flash-Lite.
+  </div>
+  <main class="chat-container">
+    <div class="chat-turn" data-message-author-role="user">
+      <p>Original high-tier request</p>
+    </div>
+    <div class="chat-turn" data-message-author-role="model">
+      <p>Original high-tier response</p>
+    </div>
+    <div class="chat-input-area">
+      <textarea aria-label="Ask Gemini"></textarea>
+    </div>
+  </main>
+</body>
+</html>

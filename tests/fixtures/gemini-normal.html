@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body>
+  <header>
+    <button aria-label="Google Account: Dev (dev@gmail.com)" data-email="dev@gmail.com">
+      <img alt="dev@gmail.com" src="data:image/gif;base64,R0lGODlhAQABAIAAAAUEBA==" />
+    </button>
+    <div class="model-picker">
+      <button aria-label="Select Model">Gemini 4 Argon</button>
+    </div>
+  </header>
+  <main class="chat-container">
+    <div class="chat-history">
+      <div class="chat-turn" data-message-author-role="user">
+        <p>Show me an example function</p>
+      </div>
+      <div class="chat-turn" data-message-author-role="model">
+        <p>Here is an example:</p>
+        <pre><code class="language-js">function add(a, b) {\n  return a + b;\n}</code></pre>
+      </div>
+      <div class="chat-turn" data-message-author-role="user">
+        <p>Now make it subtract</p>
+      </div>
+      <div class="chat-turn" data-message-author-role="model">
+        <p>Here is subtraction:</p>
+        <pre><code class="language-js">function sub(a, b) {\n  return a - b;\n}</code></pre>
+      </div>
+    </div>
+    <div class="chat-input-area">
+      <div class="ql-editor" contenteditable="true" aria-label="Ask Gemini"></div>
+      <button aria-label="Send message">Send</button>
+    </div>
+  </main>
+</body>
+</html>
